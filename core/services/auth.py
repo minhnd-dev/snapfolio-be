@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from core.repositories.user import UserRepository
-from core.schemas.user import UserRead
+from core.schemas.user import UserRead, User
 
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"
@@ -54,7 +54,7 @@ class AuthService:
             username: str = payload.get("sub")
             if username is None:
                 raise credentials_exception
-            token_data = UserRead(username=username)
+            token_data = User(username=username)
         except JWTError:
             raise credentials_exception
         user = self.repository.get_user_by_username(username=token_data.username)

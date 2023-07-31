@@ -1,20 +1,18 @@
-from datetime import timedelta, datetime
+from datetime import timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, status, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import jwt, JWTError
-from passlib.context import CryptContext
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from core.models.database import get_db
 from core.schemas.user import UserCreate, UserRead, User as UserSchema, Token
-from core.models.user import User as UserModel
 from core.services.auth import AuthService
 from core.services.user import UserService
 
 router = APIRouter()
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 @router.post("/token", response_model=Token)
@@ -36,14 +34,18 @@ def login_for_access_token(
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/user", response_model=UserSchema)
-async def create_user(user: UserCreate, db: Session = Depends(get_db)):
+async def sign_up(user: UserCreate, db: Session = Depends(get_db)):
     user_service = UserService(db)
+    db_user = user_service.get_user_by_username(user.username)
+    if db_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already registered"
+        )
     db_user = user_service.create_user(user.username, user.password)
     return db_user
 
-
 @router.get("/user", response_model=UserRead)
-async def get_user(username: str, db: Session = Depends(get_db)):
-    user_service = UserService(db)
-    result = user_service.get_user_by_username(username)
-    return result
+async def get_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)):
+    auth_service = AuthService(db)
+    return auth_service.get_current_user(token)
