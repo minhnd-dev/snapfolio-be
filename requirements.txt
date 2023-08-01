@@ -1,0 +1,6 @@
+fastapi==0.100.1
+SQLAlchemy~=2.0.19
+pydantic==2.1.1
+passlib~=1.7.4
+starlette==0.31.0
+alembic~=1.11.1
