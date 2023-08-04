@@ -15,6 +15,7 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
+
 @router.post("/token", response_model=Token)
 def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(get_db)
@@ -33,6 +34,7 @@ def login_for_access_token(
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
+
 @router.post("/user", response_model=UserSchema)
 async def sign_up(user: UserCreate, db: Session = Depends(get_db)):
     user_service = UserService(db)
@@ -45,7 +47,15 @@ async def sign_up(user: UserCreate, db: Session = Depends(get_db)):
     db_user = user_service.create_user(user.username, user.password)
     return db_user
 
+
 @router.get("/user", response_model=UserRead)
 async def get_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)):
     auth_service = AuthService(db)
     return auth_service.get_current_user(token)
+
+
+@router.get("/users", response_model=list[UserRead])
+async def get_all_users(db: Session = Depends(get_db)):
+    user_service = UserService(db)
+    return user_service.get_all_users()
+

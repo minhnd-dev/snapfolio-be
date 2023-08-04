@@ -4,9 +4,12 @@ class FileBase(BaseModel):
     name: str
     path: str
     content_type: str | None
-    size: int | None
-    user_id: str | None
+    user_id: int | None
 
 
 class FileCreate(FileBase):
+    pass
+
+
+class FileGet(FileBase):
     pass

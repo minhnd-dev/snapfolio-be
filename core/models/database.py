@@ -15,6 +15,11 @@ def get_db():
     finally:
         db.close()
 
+# def db_session(function: callable[...]):
+#     with get_db() as db:
+#         
+#
+
 
 class Base(DeclarativeBase):
     pass
