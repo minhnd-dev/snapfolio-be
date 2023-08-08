@@ -55,7 +55,6 @@ class AuthService:
             username = payload.get("sub")
             if username is None:
                 raise credentials_exception
-            token_data = user_model.User(username=username)
         except JWTError:
             raise credentials_exception
         user = self.db.query(user_model.User).filter(user_model.User.username == username).first()

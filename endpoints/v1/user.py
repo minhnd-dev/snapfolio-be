@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from core.models.database import get_db
 from core.schemas.user import UserCreate, UserRead, User as UserSchema, Token
 from core.services.auth import AuthService
-from core.services.user import UserService
+from core.services.user import UserService, UserExistedError
 
 router = APIRouter()
 
@@ -35,23 +35,17 @@ def login_for_access_token(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.post("/user", response_model=UserSchema)
+@router.post("/user")
 async def sign_up(user: UserCreate, db: Session = Depends(get_db)):
     user_service = UserService(db)
-    db_user = user_service.get_user_by_username(user.username)
-    if db_user:
+    try:
+        user_service.create_user(user.username, user.password)
+        return {"msg": "success"}
+    except UserExistedError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already registered"
         )
-    db_user = user_service.create_user(user.username, user.password)
-    return db_user
-
-
-@router.get("/user", response_model=UserRead)
-async def get_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)):
-    auth_service = AuthService(db)
-    return auth_service.get_current_user(token)
 
 
 @router.get("/users", response_model=list[UserRead])

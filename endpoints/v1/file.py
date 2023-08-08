@@ -44,7 +44,7 @@ def get_user_files(token: Annotated[str, Depends(oauth2_scheme)], db: Session = 
 
 
 @router.delete("/files/{file_id}")
-def delete_file(token: Annotated[str, Depends(oauth2_scheme)], file_id: str):
+def delete_file(token: Annotated[str, Depends(oauth2_scheme)], file_id: str, db: Session = Depends(get_db)):
     auth_service = AuthService(db)
     file_service = FileService(db)
 

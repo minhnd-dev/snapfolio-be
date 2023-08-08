@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from v1.endpoints.user import router as user_router
-from v1.endpoints.file import router as file_router
+from endpoints.v1.user import router as user_router
+from endpoints.v1.file import router as file_router
 from core.models.database import Base, engine
 
 Base.metadata.create_all(bind=engine)
