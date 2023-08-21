@@ -12,4 +12,5 @@ class FileCreate(FileBase):
 
 
 class FileGet(FileBase):
+    id: int
     pass

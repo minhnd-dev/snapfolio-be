@@ -14,6 +14,7 @@ router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
 
 
 @router.post("/token", response_model=Token)
@@ -28,11 +29,16 @@ def login_for_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"}
         )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = auth_service.create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "token": auth_service.create_access_token(user.username),
+        "refresh": auth_service.create_refresh_token(user.username)
+    }
+
+
+@router.post("/token/refresh", response_model=Token)
+def refresh_access_token(refresh: str, db: Session = Depends(get_db)):
+    auth_service = AuthService(db)
+    return auth_service.refresh_token(refresh)
 
 
 @router.post("/user")

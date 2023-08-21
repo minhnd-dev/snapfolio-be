@@ -14,7 +14,7 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-@router.post("/files/")
+@router.post("/files/upload")
 async def create_file(token: Annotated[str, Depends(oauth2_scheme)], file: UploadFile, db: Session = Depends(get_db)):
     file_service = FileService(db)
     auth_service = AuthService(db)
@@ -23,7 +23,7 @@ async def create_file(token: Annotated[str, Depends(oauth2_scheme)], file: Uploa
     return {"type": file.content_type, "name": file.filename}
 
 
-@router.get("/file/{file_name_or_id}")
+@router.get("/files/{file_name_or_id}")
 def get_file_by_id(file_name_or_id: str, db: Session = Depends(get_db)):
     file_service = FileService(db)
 
@@ -33,7 +33,7 @@ def get_file_by_id(file_name_or_id: str, db: Session = Depends(get_db)):
     return FileResponse(file_path)
 
 
-@router.get("/files/user", response_model=list[FileGet])
+@router.get("/files", response_model=list[FileGet])
 def get_user_files(token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)):
     auth_service = AuthService(db)
     file_service = FileService(db)
@@ -43,11 +43,11 @@ def get_user_files(token: Annotated[str, Depends(oauth2_scheme)], db: Session = 
     return result
 
 
-@router.delete("/files/{file_id}")
-def delete_file(token: Annotated[str, Depends(oauth2_scheme)], file_id: str, db: Session = Depends(get_db)):
+@router.delete("/files/multiple")
+def delete_file(token: Annotated[str, Depends(oauth2_scheme)], files: list[str], db: Session = Depends(get_db)):
     auth_service = AuthService(db)
     file_service = FileService(db)
 
     user = auth_service.get_current_user(token)
-    file_service.delete_file_by_id(user.id, file_id)
+    file_service.delete_files_by_id(user.id, files)
 

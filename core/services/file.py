@@ -11,11 +11,12 @@ class FileService:
         self.db = db 
 
     async def create_file(self, file: UploadFile, user_id: int):
-        with open(f"files/{file.filename}", "wb") as f:
+        file_path = f"files/{file.filename}"
+        with open(file_path, "wb") as f:
             f.write(await file.read())
         db_file = File(
-            name=file.name,
-            path=file.path,
+            name=file.filename,
+            path=file_path,
             content_type=file.content_type,
             user_id=user_id,
         )
@@ -27,15 +28,20 @@ class FileService:
         return self.db.query(File).filter(File.user_id==user_id).all()
 
     def get_file_by_id(self, file_id: str) -> str:
-        file = self.db.query(select(File).where(File.id==file_id)).first()
+        file = self.db.query(File).filter(File.id==file_id).first()
         if not file:
             return ""
         return file.path
 
     def delete_file_by_id(self, user_id: int, file_id: str):
-        file = self.db.query(File).filter(and_(File.id==file_id, File.user_id==user_id)).first()
+        file_id_str = int(file_id)
+        file = self.db.query(File).filter(and_(File.id==file_id_str, File.user_id==user_id)).first()
         if file:
             self.db.delete(file)
             if os.path.exists(f"files/{file.path}"):
                 os.remove(f"files/{file.path}")
         self.db.commit()
+
+    def delete_files_by_id(self, user_id: int, files: list[str]):
+        for file_id in files:
+            self.delete_file_by_id(user_id, file_id)

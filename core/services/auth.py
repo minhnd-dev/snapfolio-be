@@ -9,9 +9,12 @@ from starlette import status
 from core.models import user as user_model
 
 
-SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
+SECRET_KEY = "jwt secret key"
+REFRESH_SECRET_KEY = "jwt refresh secret key"
 ALGORITHM = "HS256"
+
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 30
 
 
 class AuthService:
@@ -34,24 +37,41 @@ class AuthService:
         return user
 
     @staticmethod
-    def create_access_token(data: dict, expires_delta: timedelta | None = None):
-        to_encode = data.copy()
-        if expires_delta:
-            expire = datetime.utcnow() + expires_delta
-        else:
-            expire = datetime.utcnow() + timedelta(minutes=15)
-        to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    def create_access_token(username: str, expires_delta: timedelta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)) -> str:
+        expire = datetime.utcnow() + expires_delta
+        data = {
+            "sub": username,
+            "exp": expire
+        }
+        encoded_jwt = jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
 
-    def get_current_user(self, token: str) -> user_model.User:
+    @staticmethod
+    def create_refresh_token(username: str, expires_delta: timedelta = timedelta(minutes=REFRESH_TOKEN_EXPIRE_MINUTES)) -> str:
+        data = {
+            "sub": username,
+            "exp": datetime.utcnow() + expires_delta
+        }
+        refresh_token = jwt.encode(data, REFRESH_SECRET_KEY, algorithm=ALGORITHM)
+        return refresh_token
+
+    def refresh_token(self, refresh_token: str) -> dict[str, str]:
+        current_user = self.get_current_user(refresh_token, refresh=True)
+
+        return {
+            "token": self.create_access_token(current_user.username),
+            "refresh": self.create_refresh_token(current_user.username)
+        }
+
+    def get_current_user(self, token: str, refresh=False) -> user_model.User:
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"}
         )
+        secret = SECRET_KEY if not refresh else REFRESH_SECRET_KEY
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            payload = jwt.decode(token, secret, algorithms=[ALGORITHM])
             username = payload.get("sub")
             if username is None:
                 raise credentials_exception

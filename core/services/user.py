@@ -18,6 +18,7 @@ class UserService:
             raise UserExistedError
         password_hash = self.pwd_context.hash(password)
         user = User(username=username, password=password_hash)
+
         self.db.add(user)
         self.db.commit()
         self.db.refresh(user)
@@ -28,3 +29,4 @@ class UserService:
 
     def get_all_users(self) -> list[User]:
         return self.db.query(User).all()
+

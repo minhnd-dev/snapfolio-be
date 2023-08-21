@@ -4,8 +4,8 @@ import string
 
 
 class Token(BaseModel):
-    access_token: str
-    token_type: str
+    token: str
+    refresh: str
 
 
 class TokenData(BaseModel):
