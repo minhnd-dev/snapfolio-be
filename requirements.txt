@@ -7,3 +7,5 @@ alembic~=1.11.1
 uvicorn[standard]
 python-jose
 python-multipart
+python-dotenv~=1.0.0
+jose~=1.0.0
