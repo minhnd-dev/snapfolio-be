@@ -1,4 +1,6 @@
 from pydantic import BaseModel
+from core.schemas.tag import TagGet
+
 
 class FileBase(BaseModel):
     name: str
@@ -13,4 +15,5 @@ class FileCreate(FileBase):
 
 class FileGet(FileBase):
     id: int
+    tags: list[TagGet]
     pass

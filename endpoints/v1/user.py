@@ -30,7 +30,7 @@ def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"}
         )
     return {
-        "token": auth_service.create_access_token(user.username),
+        "access_token": auth_service.create_access_token(user.username),
         "refresh": auth_service.create_refresh_token(user.username)
     }
 
@@ -52,10 +52,3 @@ async def sign_up(user: UserCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already registered"
         )
-
-
-@router.get("/users", response_model=list[UserRead])
-async def get_all_users(db: Session = Depends(get_db)):
-    user_service = UserService(db)
-    return user_service.get_all_users()
-
