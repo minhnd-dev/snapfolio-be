@@ -4,7 +4,7 @@ import string
 
 
 class Token(BaseModel):
-    token: str
+    access_token: str
     refresh: str
 
 

@@ -59,7 +59,7 @@ class AuthService:
         current_user = self.get_current_user(refresh_token, refresh=True)
 
         return {
-            "token": self.create_access_token(current_user.username),
+            "access_token": self.create_access_token(current_user.username),
             "refresh": self.create_refresh_token(current_user.username)
         }
 

@@ -6,10 +6,12 @@ class TagService:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_tag(self, label: str):
-        tag = Tag(label=label)
-        self.db.add(tag)
-        self.db.commit()
-        self.db.refresh(tag)
-        return tag
+    def create_tag(self, user_id: int, labels: list[str]):
+        labels = set(labels)
+        for label in labels:
+            pass
+
+
+
+
 
