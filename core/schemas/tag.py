@@ -9,3 +9,7 @@ class TagBase(BaseModel):
 class TagGet(TagBase):
     pass
 
+
+class TagPut(BaseModel):
+    id: int | None
+    label: str

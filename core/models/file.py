@@ -8,6 +8,8 @@ class File(Base):
     __tablename__ = "file"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(256))
+    code: Mapped[str] = mapped_column(String(256))
+    size: Mapped[int]
     path: Mapped[str] = mapped_column(String(256))
     content_type: Mapped[str] = mapped_column(String(64))
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))

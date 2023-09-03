@@ -7,6 +7,8 @@ class FileBase(BaseModel):
     path: str
     content_type: str | None
     user_id: int | None
+    code: str
+    size: int
 
 
 class FileCreate(FileBase):

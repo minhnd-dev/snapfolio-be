@@ -27,11 +27,11 @@ async def create_file(
     return {"type": file.content_type, "name": file.filename}
 
 
-@router.get("/files/{file_id}")
-def get_file_by_id(file_id: int, db: Session = Depends(get_db)):
+@router.get("/files/{file_code}")
+def get_file_by_id(file_code: str, db: Session = Depends(get_db)):
     file_service = FileService(db)
 
-    file_path = file_service.get_file_by_id(file_id).path
+    file_path = file_service.get_file_by_code(file_code).path
     return FileResponse(file_path)
 
 
@@ -79,19 +79,20 @@ def delete_file(
     user = auth_service.get_current_user(token)
     file_service.delete_files_by_id(user.id, files)
 
-#
-# @router.post("/files/{file_id}/tags")
-# def add_file_tag(
-#     token: Annotated[str, Depends(oauth2_scheme)],
-#     file_id: int,
-#     tag_labels: list[str],
-#     db: Session = Depends(get_db),
-# ):
-#     auth_service = AuthService(db)
-#     file_service = FileService(db)
-#
-#     user = auth_service.get_current_user(token)
-#     file_service.add_tags(user.id, file_id, tag_labels)
+
+@router.patch("/files/{file_id}/tags")
+def update_file_tags(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    file_id: int,
+    tag_labels: list[str],
+    db: Session = Depends(get_db),
+):
+    auth_service = AuthService(db)
+    file_service = FileService(db)
+
+    user = auth_service.get_current_user(token)
+    file_service.update_tags(user.id, file_id, tag_labels)
+    return {"msg": "success"}
 
 
 @router.post("/files/tags")
@@ -106,6 +107,6 @@ def add_tags_to_files(
     user = auth_service.get_current_user(token)
 
     for file_id in file_ids:
-        file_service.add_tags(user.id, file_id, tag_labels)
+        file_service.update_tags(user.id, file_id, tag_labels)
 
     return {"msg": "success"}

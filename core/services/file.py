@@ -1,6 +1,6 @@
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, delete
 import os
 
 from core.models.file import File
@@ -8,6 +8,7 @@ from core.models.tag import Tag
 from core.models.user import User
 
 from core.services.tag import TagService
+from uuid import uuid4
 
 
 class FileNotFound(Exception):
@@ -19,7 +20,8 @@ class FileService:
         self.db = db
 
     async def create_file(self, file: UploadFile, user: User):
-        file_path = f"files/{file.filename}"
+        file_code = str(uuid4())
+        file_path = f"files/{file_code}"
         with open(file_path, "wb") as f:
             f.write(await file.read())
         db_file = File(
@@ -27,6 +29,8 @@ class FileService:
             path=file_path,
             content_type=file.content_type,
             user=user,
+            code=file_code,
+            size=file.size
         )
         self.db.add(db_file)
         self.db.commit()
@@ -51,6 +55,9 @@ class FileService:
             .first()
         )
 
+    def get_file_by_code(self, file_code: str) -> File | None:
+        return self.db.scalar(select(File).filter(File.code == file_code))
+
     def delete_file_by_id(self, user_id: int, file_id: int):
         file = (
             self.db.query(File)
@@ -67,13 +74,15 @@ class FileService:
         for file_id in files:
             self.delete_file_by_id(user_id, file_id)
 
-    def add_tags(self, user_id: int, file_id: int, tag_labels: list[str]):
-        file = self.get_file_by_id(file_id, user_id)
+    def update_tags(self, user_id: int, file_id: int, tag_labels: list[str]):
+        tag_service = TagService(self.db)
 
+        file = self.get_file_by_id(file_id, user_id)
         if not file:
             raise FileNotFound
 
-        tag_service = TagService(self.db)
+        # remove deleted tags
+        file.tags = [tag for tag in file.tags if tag.label in tag_labels]
 
         tags = []
         new_tag_labels = []
