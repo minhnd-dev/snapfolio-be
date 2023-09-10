@@ -50,7 +50,7 @@ def update_tags(token: Annotated[str, Depends(oauth2_scheme)], tags: list[TagPut
     tag_service = TagService(db)
 
     user = auth_service.get_current_user(token)
-    tag_service.update_tags(user, tags)
+    tag_service.update_tags(user,tags)
 
     return {"msg": "success"}
 

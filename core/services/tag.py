@@ -5,6 +5,7 @@ from sqlalchemy.sql.functions import count
 from core.models.tag import Tag
 from core.models.user import User
 from core.schemas.tag import TagPut
+from core.models.file import File
 
 
 class TagService:
@@ -55,16 +56,14 @@ class TagService:
         )
 
     def get_user_tags(self, user: User):
-        return [
-            row._asdict()
-            for row in self.db.execute(
-                select(Tag.id, Tag.label, count().label("count"))
-                .join(Tag.files)
-                .filter(Tag.user_id == user.id)
-                .group_by(Tag.id)
-                .order_by(count().desc(), Tag.label)
-            )
-        ]
+        stmt = (
+            select(Tag.id, Tag.label, count(File.id).label("count"))
+            .join(Tag.files, isouter=True)
+            .filter(Tag.user_id == user.id)
+            .group_by(Tag.id)
+            .order_by(count(File.id).desc(), Tag.label)
+        )
+        return [row._asdict() for row in self.db.execute(stmt)]
 
     def update_tags(self, user: User, tags: list[TagPut]):
         tag_ids = [tag.id for tag in tags]
@@ -77,10 +76,7 @@ class TagService:
                 if tag.label != tag_put.label:
                     tag.label = tag_put.label
             else:
-                tag = Tag(
-                    label=tag_put.label,
-                    user_id=user.id
-                )
+                tag = Tag(label=tag_put.label, user_id=user.id)
                 self.db.add(tag)
                 self.db.commit()
                 self.db.refresh(tag)

@@ -30,3 +30,7 @@ class UserService:
     def get_all_users(self) -> list[User]:
         return self.db.query(User).all()
 
+    def change_password(self, user: User, new_password: str):
+        password_hash = self.pwd_context.hash(new_password)
+        user.password = password_hash
+        self.db.commit()

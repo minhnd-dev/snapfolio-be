@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from core.models.database import get_db
 from core.services.auth import AuthService
 from core.services.file import FileService
-from core.schemas.file import FileGet
+from core.schemas.file import FileGet, GetUserFilesResonse
 from fastapi.responses import FileResponse
 
 router = APIRouter()
@@ -44,19 +44,22 @@ def get_file_info(token: Annotated[str, Depends(oauth2_scheme)], file_id: int, d
     return file_service.get_file_by_id(file_id, user.id)
 
 
-@router.get("/files", response_model=list[FileGet])
+@router.get("/files", response_model=GetUserFilesResonse)
 def get_user_files(
-    token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)
+    token: Annotated[str, Depends(oauth2_scheme)], limit: int, offset: int, db: Session = Depends(get_db)
 ):
     auth_service = AuthService(db)
     file_service = FileService(db)
 
     user = auth_service.get_current_user(token)
-    result = file_service.get_user_files(user.id)
-    return result
+    files, total = file_service.get_user_files(user.id, limit, offset)
+    return {
+        "data": files,
+        "total": total
+    }
 
 
-@router.get("/files/by-tag/{tag_id}", response_model=list[FileGet])
+@router.get("/files/by-tag/{tag_id}", response_model=GetUserFilesResonse)
 def get_user_files_by_tag(
     token: Annotated[str, Depends(oauth2_scheme)], tag_id: int, db: Session = Depends(get_db)
 ):
@@ -64,20 +67,25 @@ def get_user_files_by_tag(
     file_service = FileService(db)
 
     user = auth_service.get_current_user(token)
-    return file_service.get_user_files_by_tag(user.id, tag_id)
+    files, total = file_service.get_user_files_by_tag(user.id, tag_id)
+    return {
+        "data": files,
+        "total": total
+    }
 
 
 @router.delete("/files/multiple")
 def delete_file(
     token: Annotated[str, Depends(oauth2_scheme)],
     files: list[int],
+    select_all: bool = False,
     db: Session = Depends(get_db),
 ):
     auth_service = AuthService(db)
     file_service = FileService(db)
 
     user = auth_service.get_current_user(token)
-    file_service.delete_files_by_id(user.id, files)
+    file_service.delete_files_by_id(user.id, files, select_all=select_all)
 
 
 @router.patch("/files/{file_id}/tags")
@@ -91,22 +99,22 @@ def update_file_tags(
     file_service = FileService(db)
 
     user = auth_service.get_current_user(token)
-    file_service.update_tags(user.id, file_id, tag_labels)
+    file_service.update_file_tags(user.id, file_id, tag_labels)
     return {"msg": "success"}
 
 
-@router.post("/files/tags")
-def add_tags_to_files(
+@router.put("/files/tags")
+def update_files_tags(
     token: Annotated[str, Depends(oauth2_scheme)],
-    file_ids: list[int],
-    tag_labels: list[str],
+    files_ids: list[int],
+    added: list[str],
+    removed: list[str],
+    select_all: bool = False,
     db: Session = Depends(get_db),
 ):
     auth_service = AuthService(db)
     file_service = FileService(db)
     user = auth_service.get_current_user(token)
 
-    for file_id in file_ids:
-        file_service.update_tags(user.id, file_id, tag_labels)
-
+    file_service.update_files_tags(user.id, files_ids, added, removed, select_all)
     return {"msg": "success"}

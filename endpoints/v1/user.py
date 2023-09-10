@@ -52,3 +52,24 @@ async def sign_up(user: UserCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already registered"
         )
+
+
+@router.put("/user/password")
+async def change_password(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    old_password: str,
+    new_password: str,
+    db: Session = Depends(get_db)
+):
+    user_service = UserService(db)
+    auth_service = AuthService(db)
+
+    user = auth_service.get_current_user(token)
+    if auth_service.authenticate_user(user.username, old_password):
+        user_service.change_password(user, new_password)
+        return {"msg": "success"}
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Incorrect username or password",
+        headers={"WWW-Authenticate": "Bearer"}
+    )

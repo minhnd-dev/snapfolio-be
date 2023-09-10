@@ -19,3 +19,8 @@ class FileGet(FileBase):
     id: int
     tags: list[TagGet]
     pass
+
+
+class GetUserFilesResonse(BaseModel):
+    data: list[FileGet]
+    total: int
